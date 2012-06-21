@@ -23,28 +23,24 @@ def main():
   parser.add_option(
       '--encoding', type='string',
       action='store', dest='encoding',
-      default='fastq-illumina',
-      help='Encoding to use for input.  Set to \'fastq\' for sanger encoding.')
+      default='fastq',
+      help='Encoding to use for input. Default is \'fastq\'. Set to \'fastq-illumina\' for old solexa encoding.')
   parser.add_option(
       '--primer', type='string',
       action='store', dest='primer_file',
-      default='models/oLSC003.fna',
-      help='File containing the primer to be stripped.')
+      default='models/oLSC007.fna',
+      help='File containing the primer to be stripped. Default is \'models/oLSC007.fna\'.')
   parser.add_option(
       '--min_sequence_len', type='int',
       action='store', dest='min_sequence_len',
-      default=18,
-      help='We discard sequences shorter than this (after trimming).')
+      default=15,
+      help='We discard sequences shorter than this (after trimming).Default is 15.')
   parser.add_option(
       '--min_primer_match', type='int',
       action='store', dest='min_primer_match',
       default=6,
-      help='We ignore primer-matched tails shorter than this.')
-  parser.add_option(
-      '--max_primer_offset', type='int',
-      action='store', dest='max_primer_offset',
-      default=1,
-      help='Only match leftmost edge of primer, allowing this much offset.')
+      help='We ignore primer-matched tails shorter than this. Default is 6.')
+  
   (options, args) = parser.parse_args()
 
   logging.info('Removing primer tails & cleaning out Illumina rejected reads.')
@@ -58,8 +54,7 @@ def main():
                 options.encoding,
                 primer,
                 options.min_sequence_len,
-                options.min_primer_match,
-                options.max_primer_offset)))
+                options.min_primer_match)))
     else:
       logging.fatal('Could not find file "{0}".'.format(f))
   for p in processes:
@@ -72,8 +67,7 @@ def trim_primers_from_file(input_file,
                            encoding,
                            primer,
                            min_sequence_len,
-                           min_primer_match,
-                           max_primer_offset):
+                           min_primer_match):
   """Process one file.
 
   Basically just a workhorse that calls processed_sequences and writes each
@@ -86,8 +80,7 @@ def trim_primers_from_file(input_file,
   for seq in processed_sequences(primer,
                                  sequences,
                                  min_sequence_len,
-                                 min_primer_match,
-                                 max_primer_offset):
+                                 min_primer_match):
     output_file.write(seq.format('fastq-sanger'))
     count += 1
     if count % 100000 == 0:
@@ -97,13 +90,11 @@ def trim_primers_from_file(input_file,
 def processed_sequences(primer,
                         sequences,
                         min_sequence_len,
-                        min_primer_match,
-                        max_primer_offset):
+                        min_primer_match):
   """Clean, cut, and throw back small fish."""
 
   trimmed_sequences = (trim_primer(primer, s,
-                                   min_primer_match,
-                                   max_primer_offset)
+                                   min_primer_match)
                           for s in sequences if s)
   clean_sequences = (clean_for_illumina_flag(s) for s in trimmed_sequences if s)
   return (s for s in clean_sequences
@@ -130,8 +121,7 @@ def clean_for_illumina_flag(sequence):
 
 
 def trim_primer(primer, sequence,
-                min_primer_match,
-                max_primer_offset):
+                min_primer_match):
   """Remove aligned primer tail.
 
   Returns trimmed sequence, or None if sequence should be filtered."""
@@ -139,8 +129,9 @@ def trim_primer(primer, sequence,
   matcher.set_seq1(sequence)
   matcher.set_seq2(primer)
   match = matcher.find_longest_match(0, len(sequence), 0, len(primer))
-  if (match.size > min_primer_match and match.b <= max_primer_offset):
-    return sequence[:match.a]
+  
+  if (match.size > min_primer_match):
+    return sequence[:(match.a-match.b)]
   else:
     return sequence
 

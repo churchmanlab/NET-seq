@@ -19,7 +19,6 @@ class TestCleaningAndStripping(unittest.TestCase):
     self.inequality_error = (
         '\n{0:fastq-illumina} and \n{1:fastq-illumina} were not equal.')
     self.min_primer_match = 10
-    self.max_primer_offset = 1
     self.min_sequence_len = 18
     self.primer = 'TCGTATGCCGTCTTCTGCTTG'
     self.primer_seq = SeqRecord(self.primer)
@@ -56,14 +55,14 @@ class TestCleaningAndStripping(unittest.TestCase):
 
   def testTrivialTrimming(self):
     trimmed = strip.trim_primer(self.primer, self.baseline,
-                                self.min_primer_match, self.max_primer_offset)
+                                self.min_primer_match)
     self.assertTrue(same_sequence(trimmed, self.baseline),
         self.inequality_error.format(trimmed, self.baseline))
 
   def testSimpleTrimming(self):
     self.baseline = self.baseline[:-len(self.primer)] + self.primer_seq
     trimmed = strip.trim_primer(self.primer, self.baseline,
-                                self.min_primer_match, self.max_primer_offset)
+                                self.min_primer_match)
     self.assertTrue(same_sequence(trimmed, self.baseline[:-len(self.primer)]),
         self.inequality_error.format(trimmed, self.baseline))
 
@@ -76,29 +75,21 @@ class TestCleaningAndStripping(unittest.TestCase):
     goal_seq = SeqRecord(goal)
     goal_seq.letter_annotations['phred_quality'] = [10] * len(goal)
     trimmed = strip.trim_primer(primer, self.primer_seq,
-                                self.min_primer_match, self.max_primer_offset)
+                                self.min_primer_match)
     self.assertTrue(same_sequence(trimmed, goal_seq),
         self.inequality_error.format(trimmed, self.baseline))
 
   def testIgnoredShortPrimerTrimming(self):
     self.baseline = self.baseline[:-5] + self.primer_seq[:5]
     trimmed = strip.trim_primer(self.primer, self.baseline,
-                                self.min_primer_match, self.max_primer_offset)
-    self.assertTrue(same_sequence(trimmed, self.baseline),
-        self.inequality_error.format(trimmed, self.baseline))
-
-  def testIgnoredOffsetPrimerTrimming(self):
-    self.baseline = self.baseline[:-12] + self.primer_seq[4:16]
-    trimmed = strip.trim_primer(self.primer, self.baseline,
-                                self.min_primer_match, self.max_primer_offset)
+                                self.min_primer_match)
     self.assertTrue(same_sequence(trimmed, self.baseline),
         self.inequality_error.format(trimmed, self.baseline))
 
   def testTrivialProcessSequences(self):
     processed = strip.processed_sequences(self.primer, [self.baseline],
                                           self.min_sequence_len,
-                                          self.min_primer_match,
-                                          self.max_primer_offset).next()
+                                          self.min_primer_match).next()
     self.assertTrue(same_sequence(processed, self.baseline),
         self.inequality_error.format(processed, self.baseline))
 
@@ -107,8 +98,7 @@ class TestCleaningAndStripping(unittest.TestCase):
     s.letter_annotations['phred_quality'][-20:] = [2] * 20
     processed = strip.processed_sequences(self.primer, [s],
                                           self.min_sequence_len,
-                                          self.min_primer_match,
-                                          self.max_primer_offset).next()
+                                          self.min_primer_match).next()
     self.assertTrue(same_sequence(processed, s[:20]),
         self.inequality_error.format(processed, s[:20]))
 
@@ -118,8 +108,7 @@ class TestCleaningAndStripping(unittest.TestCase):
     s.letter_annotations['phred_quality'][-5:] = [2] * 5
     processed = strip.processed_sequences(self.primer, [s],
                                           self.min_sequence_len,
-                                          self.min_primer_match,
-                                          self.max_primer_offset)
+                                          self.min_primer_match)
     self.assertEqual([], list(processed))
 
   def testTooSmallAfterCleaning(self):
@@ -127,8 +116,7 @@ class TestCleaningAndStripping(unittest.TestCase):
     self.baseline.letter_annotations['phred_quality'][16:] = bad_tail
     processed = strip.processed_sequences(self.primer, [self.baseline],
                                           self.min_sequence_len,
-                                          self.min_primer_match,
-                                          self.max_primer_offset)
+                                          self.min_primer_match)
     self.assertEqual([], list(processed))
 
 

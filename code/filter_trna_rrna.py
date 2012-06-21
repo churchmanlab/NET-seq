@@ -35,7 +35,12 @@ def main():
       '--bowtie_error_tolerance', type='int',
       action='store', dest='bowtie_error_tolerance',
       default=3,
-      help='Allow at most this many errors in bowtie alignments.')
+      help='Allow at most this many errors in the first 28 nucleotides during bowtie alignments.')
+  parser.add_option(
+      '--bowtie_phred_quality', type='int',
+      action='store', dest='bowtie_phred_quality',
+      default=120,
+      help='The sum of the Phred quality values at all mismatched positions (not just in the seed) may not exceed this number. Default = 120')
   parser.add_option(
       '--bowtie_max_matches', type='int',
       action='store', dest='bowtie_max_matches',
@@ -64,12 +69,14 @@ def main():
                                    options.bowtie_path,
                                    options.bowtie_parallelism,
                                    options.bowtie_error_tolerance,
+                                   options.bowtie_phred_quality,
                                    options.bowtie_max_matches)
     rrna_free_file = filter_rrna(trna_free_file,
                                  options.rrna_index,
                                  options.bowtie_path,
                                  options.bowtie_parallelism,
                                  options.bowtie_error_tolerance,
+                                 options.bowtie_phred_quality,
                                  options.bowtie_max_matches)
     logging.info('Cleaned sequence file: {0}'.format(rrna_free_file))
 
@@ -79,6 +86,7 @@ def filter_trna(input_file,
                 bowtie_path,
                 bowtie_parallelism,
                 bowtie_error_tolerance,
+                bowtie_phred_quality,
                 bowtie_max_matches):
   """Remove tRNA from sequence file.
   Args:
@@ -101,7 +109,8 @@ def filter_trna(input_file,
   command.extend(['-a'])
   command.extend(['-p', str(bowtie_parallelism)])
   command.extend(['-v', str(bowtie_error_tolerance)])
-  command.extend(['-m', str(bowtie_max_matches)])
+  command.extend(['-n', str(bowtie_max_matches)])
+  command.extend(['-e', str(bowtie_phred_quality)])
   command.extend(['--nofw'])
   command.extend(['--un', output_file])
   command.extend(['--max', max_excluded_file])
@@ -120,6 +129,7 @@ def filter_rrna(input_file,
                 bowtie_path,
                 bowtie_parallelism,
                 bowtie_error_tolerance,
+                bowtie_phred_quality,
                 bowtie_max_matches):
   """Remove rRNA from sequence file.
   Args:
@@ -142,7 +152,8 @@ def filter_rrna(input_file,
   command.extend(['-a'])
   command.extend(['-p', str(bowtie_parallelism)])
   command.extend(['-v', str(bowtie_error_tolerance)])
-  command.extend(['-m', str(bowtie_max_matches)])
+  command.extend(['-n', str(bowtie_max_matches)])
+  command.extend(['-e', str(bowtie_phred_quality)])
   command.extend(['--nofw'])
   command.extend(['--un', output_file])
   command.extend(['--max', max_excluded_file])

@@ -21,17 +21,17 @@ def main():
       '--genome', type='string',
       action='store', dest='genome',
       default='models/sc_sgd_gff_20091011',
-      help='Path to bowtie index of genome against which to align.')
+      help='Path to bowtie index of genome against which to align. Default is \'models/sc_sgd_gff_20091011\'')
   parser.add_option(
       '--treat_as_mrna',
       action='store_true', dest='treat_as_mrna',
       default=False,
-      help='If set, use tophat to align around introns.')
+      help='If set, use tophat to align around introns. Warning, untested code, so it is best to go with the default: False.')
   parser.add_option(
       '--bowtie_path', type='string',
       action='store', dest='bowtie_path',
       default='bowtie',
-      help='Path to bowtie binary.')
+      help='Path to bowtie binary.Default is \'bowtie\' and probably will not work.')
   parser.add_option(
       '--fna_genome', type='string',
       action='store', dest='fna_genome',
@@ -51,17 +51,22 @@ def main():
       '--tophat_max_intron_len', type='int',
       action='store', dest='tophat_max_intron_len',
       default=5000,
-      help='Ignore intron candidates larger than this.  Default is for yeast.')
+      help='Ignore intron candidates larger than this. Default is for yeast.')
   parser.add_option(
       '--bowtie_parallelism', type='int',
       action='store', dest='bowtie_parallelism',
       default=7,
-      help='Tell bowtie to run with this many parallel processes.')
+      help='Tell bowtie to run with this many parallel processes. Default is 7.')
   parser.add_option(
       '--bowtie_error_tolerance', type='int',
       action='store', dest='bowtie_error_tolerance',
       default=3,
       help='Allow at most this many errors in bowtie alignments.')
+  parser.add_option(
+      '--bowtie_phred_quality', type='int',
+      action='store', dest='bowtie_phred_quality',
+      default=120,
+      help='The sum of the Phred quality values at all mismatched positions (not just in the seed) may not exceed this number. Default = 120')
   parser.add_option(
       '--bowtie_max_matches', type='int',
       action='store', dest='bowtie_max_matches',
@@ -83,6 +88,7 @@ def main():
                                     binary_path,
                                     options.bowtie_parallelism,
                                     options.bowtie_error_tolerance,
+                                    options.bowtie_phred_quality,
                                     options.bowtie_max_matches,
                                     options.tophat_min_anchor_len,
                                     options.tophat_max_intron_len,
@@ -96,6 +102,7 @@ def align_with_tophat(input_files,
                       binary_path,
                       bowtie_parallelism,
                       bowtie_error_tolerance,
+                      bowtie_phred_quality,
                       bowtie_max_matches,
                       tophat_min_anchor_len,
                       tophat_max_intron_len,
@@ -169,6 +176,7 @@ def align_with_bowtie(input_files,
                       binary_path,
                       bowtie_parallelism,
                       bowtie_error_tolerance,
+                      bowtie_phred_quality,
                       bowtie_max_matches,
                       tophat_min_anchor_len,
                       tophat_max_intron_len,
@@ -199,7 +207,8 @@ def align_with_bowtie(input_files,
   command = [binary_path]
   command.extend(['-a'])
   command.extend(['-p', str(bowtie_parallelism)])
-  command.extend(['-v', str(bowtie_error_tolerance)])
+  command.extend(['-n', str(bowtie_error_tolerance)])
+  command.extend(['-e', str(bowtie_phred_quality)])
   command.extend(['-m', str(bowtie_max_matches)])
   command.extend(['--sam'])
   command.extend(['--sam-nohead'])
