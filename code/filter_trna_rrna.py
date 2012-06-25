@@ -108,8 +108,8 @@ def filter_trna(input_file,
   command = [bowtie_path]
   command.extend(['-a'])
   command.extend(['-p', str(bowtie_parallelism)])
-  command.extend(['-v', str(bowtie_error_tolerance)])
-  command.extend(['-n', str(bowtie_max_matches)])
+  command.extend(['-n', str(bowtie_error_tolerance)])
+  command.extend(['-m', str(bowtie_max_matches)])
   command.extend(['-e', str(bowtie_phred_quality)])
   command.extend(['--nofw'])
   command.extend(['--un', output_file])
@@ -151,8 +151,8 @@ def filter_rrna(input_file,
   command = [bowtie_path]
   command.extend(['-a'])
   command.extend(['-p', str(bowtie_parallelism)])
-  command.extend(['-v', str(bowtie_error_tolerance)])
-  command.extend(['-n', str(bowtie_max_matches)])
+  command.extend(['-n', str(bowtie_error_tolerance)])
+  command.extend(['-m', str(bowtie_max_matches)])
   command.extend(['-e', str(bowtie_phred_quality)])
   command.extend(['--nofw'])
   command.extend(['--un', output_file])
